@@ -1,71 +1,56 @@
-export type State = Record<string, any>;
-export type Action<A extends string> = (state: State, payload?: any) => State;
-export type Reducer<A extends string> = Record<A, Action<A>>;
+import { useEffect, useState } from 'react'
+import type { ActionParameter, Reducers, ReducersToActions, Selector, State, UseStoreFunction } from '../types'
 
-export class MyStateManagement {
-  private readonly state: State;
-  reducers: Record<string, Reducer<string>>;
+export const createStore = <
+    TState extends State,
+    TReducers extends Reducers<TState> = Reducers<TState>
+>(initialState: TState, reducers: TReducers): {
+    actions: ReducersToActions<TReducers>
+    useStore: UseStoreFunction<TState>
+  } => {
+  let state = initialState
+  const listeners: Array<() => void> = []
 
-  constructor() {
-    this.state = {};
-    this.reducers = {};
+  const dispatch = (action: string, payload: any): void => {
+    state = reducers[action](state, payload)
+
+    listeners.forEach(listener => { listener() })
   }
 
-  public createSlice<A extends string>(
-    name: string,
-    reducer: Reducer<A>,
-    initialState: any
-  ) {
-    this.state[name] = initialState;
-    this.reducers[name] = reducer;
+  const useStore: UseStoreFunction<TState> = <TResult = TState>(selector: Selector<TState, TResult> | undefined) => {
+    const [selectedState, setSelectedState] = useState(selector === undefined ? state : selector(state))
 
-    return new MySlice(name, this, reducer);
+    useEffect(() => {
+      const handleChange = () => {
+        const value = selector === undefined ? state : selector(state)
+
+        if (value !== selectedState) {
+          setSelectedState(value)
+        }
+      }
+
+      listeners.push(handleChange)
+
+      return () => {
+        listeners.splice(listeners.indexOf(handleChange), 1)
+      }
+    }, [selectedState, selector])
+
+    return selectedState as TResult
   }
 
-  dispatch = (sliceName: string, action: string, payload?: any): void => {
-    this.state[sliceName] = this.reducers[sliceName][action](
-      this.state[ sliceName ],
-      payload
-    );
-  };
+  function getActions (): ReducersToActions<TReducers> {
+    return Object.keys(reducers).reduce<Record<string, any>>((acc, action) => {
+      type Payload = ActionParameter<TReducers[typeof action]>
 
-  get(sliceName: string) {
-    return this.state[sliceName];
-  }
-}
+      acc[action] = (payload: Payload) => { dispatch(action, payload) }
 
-export class MySlice<A extends string> {
-  private readonly name: string;
-  private readonly StateManagement: MyStateManagement;
-  private subscribers: (() => void)[] = [];
-  private readonly reducers: Reducer<A>;
-
-  constructor(name: string, StateManagement: MyStateManagement, reducers: Reducer<A>) {
-    this.name = name;
-    this.reducers = reducers;
-    this.StateManagement = StateManagement;
+      return acc
+    }, {}) as ReducersToActions<TReducers>
   }
 
-  subscribe(callback: () => void) {
-    this.subscribers.push(callback);
-  }
-
-  unsubscribe(callback: () => void) {
-    this.subscribers = this.subscribers.filter(
-      (subscriber) => subscriber !== callback
-    );
-  }
-
-  private notify() {
-    this.subscribers.forEach((subscriber) => subscriber());
-  }
-
-  dispatch(action: A, payload?: any): void {
-    this.StateManagement.dispatch(this.name, action, payload);
-    this.notify();
-  }
-
-  getState() {
-    return this.StateManagement.get(this.name);
+  return {
+    actions: getActions(),
+    useStore
   }
 }

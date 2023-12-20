@@ -1,15 +1,22 @@
-import { State, MyStateManagement } from "./utils/state-manager";
+import { createStore } from './utils/state-manager'
 
-const StateManagement = new MyStateManagement();
-export const testSlice = StateManagement.createSlice(
-    "test",
-    {
-      increment: (state: State) => ({ count: state.count + 1 }),
-      decrement: (state: State) => ({ ...state, count: state.count - 1 }),
-      setValue: (state: State, payload: number = 0) => ({
-        ...state,
-        count: payload,
-      }),
-    },
-    { count: 0 },
-);
+export const { actions, useStore } = createStore({ count: 0 }, {
+  increment (state) {
+    return {
+      ...state,
+      count: state.count + 1
+    }
+  },
+  decrement (state) {
+    return {
+      ...state,
+      count: state.count - 1
+    }
+  },
+  setValue (state, value: number = 0) {
+    return {
+      ...state,
+      count: value
+    }
+  }
+})
