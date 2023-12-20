@@ -1,6 +1,10 @@
 
 <h1 align="center">
-  My State Management
+  <br>
+  <img src="https://cdn-icons-png.flaticon.com/512/345/345636.png" alt="PHP Router" width="200">
+  <br>
+     <a href="https://omerisra6-state-management.netlify.app/">State Management</a>
+  <br>
 </h1>
 
 <h4 align="center">My State Management built with <a href="https://react.dev/" target="_blank">React</a> and <a href="https://www.typescriptlang.org/">Typescript</a>.</h4>
@@ -13,11 +17,19 @@
 </p>
 <h2 align="center">
   Screenshots
+   <br>
+  <br>
+  <img src=https://i.ibb.co/ySNNbWz/Screenshot-2023-12-20-at-10-31-57.png" alt="Screenshot" border="0" width="800"/> 
 </h2>
 
 
 ## Key Features
-
+* TypeScript Integration
+  - The state management tool is fully typed, ensuring a robust and type-safe implementation.
+* Action Handling
+  - Accessible action names and payload types enhance code readability and maintainability.
+* Optimized Rendering
+  - The hook optimizes React component rendering, preventing unnecessary re-renders when actions don't affect the state.
 
 ## How To Use
 
