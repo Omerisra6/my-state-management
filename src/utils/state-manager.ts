@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import type { ActionParameter, Reducers, ReducersToActions, Selector, State, UseStoreFunction } from '../types'
 
 export const createStore = <
@@ -17,26 +17,16 @@ export const createStore = <
     listeners.forEach(listener => { listener() })
   }
 
+  const subscribe = (listener: () => void): (() => void) => {
+    listeners.push(listener)
+
+    return () => {
+      listeners.splice(listeners.indexOf(listener), 1)
+    }
+  }
+
   const useStore: UseStoreFunction<TState> = <TResult = TState>(selector: Selector<TState, TResult> | undefined) => {
-    const [selectedState, setSelectedState] = useState(selector === undefined ? state : selector(state))
-
-    useEffect(() => {
-      const handleChange = () => {
-        const value = selector === undefined ? state : selector(state)
-
-        if (value !== selectedState) {
-          setSelectedState(value)
-        }
-      }
-
-      listeners.push(handleChange)
-
-      return () => {
-        listeners.splice(listeners.indexOf(handleChange), 1)
-      }
-    }, [selectedState, selector])
-
-    return selectedState as TResult
+    return useSyncExternalStore(subscribe, () => selector === undefined ? state : selector(state)) as TResult
   }
 
   function getActions (): ReducersToActions<TReducers> {
